@@ -1,5 +1,6 @@
 from dndgame.character import Character, RACE_BONUSES
-from dndgame.dice import roll
+from dndgame.combat import Combat
+from dndgame.enemy import Goblin
 
 
 def get_valid_choice(min_choice: int, max_choice: int) -> int:
@@ -33,7 +34,12 @@ def get_valid_choice(min_choice: int, max_choice: int) -> int:
         )
 
 
-def create_character():
+def create_character() -> Character:
+    """Create a character from user input.
+
+    Returns:
+        The newly created character.
+    """
     print("Welcome to D&D Adventure!")
     name = input("Enter your character's name: ")
 
@@ -59,50 +65,86 @@ def create_character():
     character = Character(name, race, 10)
     character.roll_stats()
     character.apply_racial_bonuses()
+
     return character
 
 
-def display_character(character):
+def display_character(character: Character) -> None:
+    """Display a character's information.
+
+    Args:
+        character: The character to display.
+    """
     print(f"\n{character.name} the {character.race}")
     print("\nStats:")
 
     for stat, value in character.stats.items():
         modifier = character.get_modifier(stat)
-        print(f"{stat}: {value} ({'+' if modifier >= 0 else ''}{modifier})")
+        sign = "+" if modifier >= 0 else ""
+        print(f"{stat}: {value} ({sign}{modifier})")
 
-    print(f"\nHP: {character.hp}")
+    print(f"\nHP: {character.hp}/{character.max_hp}")
 
 
-def simple_combat(player):
+def play_combat(player: Character) -> bool:
+    """Run an interactive combat encounter against a goblin.
+
+    Args:
+        player: The player's character.
+
+    Returns:
+        True if the player wins, otherwise False.
+    """
+    goblin = Goblin()
+    combat = Combat(player, goblin)
+
     print("\nA goblin appears!")
-    goblin_hp = 5
 
-    while goblin_hp > 0:
-        print(f"\nGoblin HP: {goblin_hp}")
+    while not combat.is_over():
+        combat.round += 1
+
+        print(f"\n--- Round {combat.round} ---")
+        print(f"{goblin.name} HP: {goblin.hp}")
+        print(f"{player.name} HP: {player.hp}")
+
         print("\nYour turn!")
         print("1. Attack")
         print("2. Run away")
         print()
 
-        choice = input("What do you do? ")
+        choice = get_valid_choice(1, 2)
 
-        if choice == "1":
-            attack = roll(20, 1)
-
-            if attack >= 10:
-                damage = roll(4, 1)
-                goblin_hp -= damage
-                print(f"You hit for {damage} damage!")
-            else:
-                print("You missed!")
-
-        elif choice == "2":
+        if choice == 2:
             return False
+
+        damage = combat.attack(player, goblin)
+
+        if damage > 0:
+            print(f"You hit the goblin for {damage} damage!")
+        else:
+            print("You missed!")
+
+        if combat.is_over():
+            break
+
+        print("\nThe goblin attacks!")
+
+        damage = combat.attack(goblin, player)
+
+        if damage > 0:
+            print(f"The goblin hit you for {damage} damage!")
+        else:
+            print("The goblin missed!")
+
+    if player.hp <= 0:
+        print("\nYou were defeated!")
+        return False
 
     return True
 
 
-def main():
+def main() -> None:
+    """Run the D&D adventure."""
     player = create_character()
 
     while True:
@@ -111,20 +153,21 @@ def main():
         print("2. View character")
         print("3. Quit")
 
-        choice = input("Enter choice (1-3): ")
+        choice = get_valid_choice(1, 3)
 
-        if choice == "1":
-            victory = simple_combat(player)
+        if choice == 1:
+            victory = play_combat(player)
 
             if victory:
-                print("You defeated the goblin!")
+                print("\nYou defeated the goblin!")
             else:
-                print("You ran away!")
+                print("\nThe combat is over.")
 
-        elif choice == "2":
+        elif choice == 2:
             display_character(player)
 
-        elif choice == "3":
+        elif choice == 3:
+            print("Goodbye!")
             break
 
 

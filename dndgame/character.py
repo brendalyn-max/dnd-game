@@ -1,4 +1,5 @@
 from dndgame.dice import roll
+from dndgame.entity import Entity
 
 
 RACE_BONUSES: dict[str, dict[str, int]] = {
@@ -17,7 +18,7 @@ RACE_BONUSES: dict[str, dict[str, int]] = {
 }
 
 
-class Character:
+class Character(Entity):
     """Represent a player character in the D&D adventure.
 
     Attributes:
@@ -28,45 +29,28 @@ class Character:
         hp: The character's current hit points.
         max_hp: The character's maximum hit points.
         level: The character's current level.
-        armor_class: The character's armor class used when defending.
+        armor_class: The character's armor class.
     """
 
     def __init__(self, name: str, race: str, base_hp: int) -> None:
-        """Initialize a new character.
+        """Initialize a player character.
 
         Args:
             name: The character's name.
             race: The character's race.
             base_hp: The character's starting hit points.
         """
-        self.name: str = name
+        super().__init__(name, base_hp)
         self.race: str = race
-        self.stats: dict[str, int] = {}
-        self.base_hp: int = base_hp
-        self.hp: int = 0
-        self.max_hp: int = 0
-        self.level: int = 1
-        self.armor_class: int = 10
-
-    def get_modifier(self, stat: str) -> int:
-        """Calculate the ability modifier for a stat.
-
-        Args:
-            stat: The name of the ability score, such as STR or DEX.
-
-        Returns:
-            The ability modifier calculated from the stat score.
-        """
-        return (self.stats[stat] - 10) // 2
 
     def roll_stats(self) -> None:
-        """Roll and assign values for the character's ability scores.
+        """Roll and assign the character's ability scores.
 
         The character receives values for STR, DEX, CON, INT, WIS,
-        and CHA. Maximum and current HP are then calculated using
-        the character's base HP and CON modifier.
+        and CHA. Maximum and current HP are then calculated.
         """
         print("Rolling stats...\n")
+
         stats = ["STR", "DEX", "CON", "INT", "WIS", "CHA"]
 
         for stat in stats:
@@ -85,9 +69,12 @@ class Character:
         bonuses = RACE_BONUSES[self.race]
 
         if "ALL" in bonuses:
-            for stat in self.stats:
-                self.stats[stat] += bonuses["ALL"]
+            self.stats = {
+                stat: value + bonuses["ALL"]
+                for stat, value in self.stats.items()
+            }
 
-        for stat, bonus in bonuses.items():
-            if stat != "ALL":
-                self.stats[stat] += bonus
+        self.stats = {
+            stat: value + bonuses.get(stat, 0)
+            for stat, value in self.stats.items()
+        }

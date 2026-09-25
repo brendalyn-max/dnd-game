@@ -1,36 +1,34 @@
 from dndgame.dice import roll
+from dndgame.entity import Entity
 
 
 class Combat:
-    """Manage combat between a player and an enemy.
+    """Manage combat between two entities.
 
     Attributes:
-        player: The player character participating in combat.
+        player: The player participating in combat.
         enemy: The enemy participating in combat.
         round: The current combat round.
-        initiative_order: The order in which combatants take their turns.
+        initiative_order: The order in which combatants act.
     """
 
-    def __init__(self, player, enemy):
+    def __init__(self, player: Entity, enemy: Entity) -> None:
         """Initialize a combat encounter.
 
         Args:
-            player: The player character participating in combat.
+            player: The player participating in combat.
             enemy: The enemy participating in combat.
         """
-        self.player = player
-        self.enemy = enemy
-        self.round = 0
-        self.initiative_order = []
+        self.player: Entity = player
+        self.enemy: Entity = enemy
+        self.round: int = 0
+        self.initiative_order: list[Entity] = []
 
-    def roll_initiative(self):
+    def roll_initiative(self) -> list[Entity]:
         """Determine the order in which combatants act.
 
-        Initiative is calculated by rolling a d20 and adding each
-        combatant's DEX modifier.
-
         Returns:
-            A list containing the player and enemy in initiative order.
+            The combatants ordered by initiative.
         """
         player_init = roll(20, 1) + self.player.get_modifier("DEX")
         enemy_init = roll(20, 1) + self.enemy.get_modifier("DEX")
@@ -42,24 +40,46 @@ class Combat:
 
         return self.initiative_order
 
-    def attack(self, attacker, defender):
-        """Perform an attack from one combatant against another.
-
-        The attacker rolls a d20 and adds their STR modifier. If the
-        result meets or exceeds the defender's armor class, the attack
-        deals 1d6 damage.
+    def attack(self, attacker: Entity, defender: Entity) -> int:
+        """Perform an attack from one entity against another.
 
         Args:
-            attacker: The combatant making the attack.
-            defender: The combatant receiving the attack.
+            attacker: The entity making the attack.
+            defender: The entity receiving the attack.
 
         Returns:
-            The amount of damage dealt, or 0 if the attack misses.
+            The damage dealt, or zero if the attack misses.
         """
         attack_roll = roll(20, 1) + attacker.get_modifier("STR")
-        weapon_max_damage = 6
+
         if attack_roll >= defender.armor_class:
-            damage = roll(weapon_max_damage, 1)
-            defender.hp -= damage
+            damage = roll(6, 1)
+            defender.hp = max(0, defender.hp - damage)
             return damage
+
         return 0
+
+    def is_over(self) -> bool:
+        """Check whether either combatant has reached zero HP.
+
+        Returns:
+            True if the player or enemy has zero HP.
+        """
+        return self.player.hp <= 0 or self.enemy.hp <= 0
+
+    def winner(self) -> Entity | None:
+        """Return the surviving combatant.
+
+        Returns:
+            The surviving entity, or None if combat is not over.
+        """
+        if not self.is_over():
+            return None
+
+        if self.player.hp > 0:
+            return self.player
+
+        if self.enemy.hp > 0:
+            return self.enemy
+
+        return None
