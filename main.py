@@ -2,6 +2,37 @@ from dndgame.character import Character, RACE_BONUSES
 from dndgame.dice import roll
 
 
+def get_valid_choice(min_choice: int, max_choice: int) -> int:
+    """Get a valid numeric choice from the user.
+
+    Args:
+        min_choice: The smallest valid choice.
+        max_choice: The largest valid choice.
+
+    Returns:
+        A valid integer within the specified range.
+    """
+    while True:
+        choice = input(f"Enter choice ({min_choice}-{max_choice}): ")
+
+        try:
+            choice_number = int(choice)
+        except ValueError:
+            print(
+                f"Invalid choice. Please enter a number "
+                f"from {min_choice} to {max_choice}."
+            )
+            continue
+
+        if min_choice <= choice_number <= max_choice:
+            return choice_number
+
+        print(
+            f"Invalid choice. Please enter a number "
+            f"from {min_choice} to {max_choice}."
+        )
+
+
 def create_character():
     print("Welcome to D&D Adventure!")
     name = input("Enter your character's name: ")
@@ -22,8 +53,8 @@ def create_character():
 
         print(f"{index}. {race} ({description})")
 
-    race_choice = input(f"Enter choice (1-{len(races)}): ")
-    race = races[int(race_choice) - 1]
+    race_choice = get_valid_choice(1, len(races))
+    race = races[race_choice - 1]
 
     character = Character(name, race, 10)
     character.roll_stats()
