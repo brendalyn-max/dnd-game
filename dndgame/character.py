@@ -1,6 +1,22 @@
 from dndgame.dice import roll
 
 
+RACE_BONUSES: dict[str, dict[str, int]] = {
+    "Human": {
+        "ALL": 1,
+    },
+    "Elf": {
+        "DEX": 2,
+    },
+    "Dwarf": {
+        "CON": 2,
+    },
+    "Orc": {
+        "STR": 2,
+    },
+}
+
+
 class Character:
     """Represent a player character in the D&D adventure.
 
@@ -64,12 +80,14 @@ class Character:
         """Apply ability score bonuses based on the character's race.
 
         Humans gain +1 to every ability score, Elves gain +2 DEX,
-        and Dwarves gain +2 CON.
+        Dwarves gain +2 CON, and Orcs gain +2 STR.
         """
-        if self.race == "Dwarf":
-            self.stats["CON"] += 2
-        elif self.race == "Elf":
-            self.stats["DEX"] += 2
-        elif self.race == "Human":
+        bonuses = RACE_BONUSES[self.race]
+
+        if "ALL" in bonuses:
             for stat in self.stats:
-                self.stats[stat] += 1
+                self.stats[stat] += bonuses["ALL"]
+
+        for stat, bonus in bonuses.items():
+            if stat != "ALL":
+                self.stats[stat] += bonus
